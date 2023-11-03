@@ -6,13 +6,13 @@ import (
 	ruangan "github.com/rizghz/genesys/module/Ruangan"
 )
 
-type Entity ruangan.RuanganEntity
-type Model ruangan.RuanganModel
+type RuanganEntity ruangan.RuanganEntity
+type RuanganModel ruangan.RuanganModel
 
 type RuanganRepository interface {
-	Get(query url.Values) []Entity
-	Find(kode string) *Entity
-	Create(data *Model) *Entity
-	Update(kode string, data *Model) *Entity
+	Get(query url.Values) []RuanganEntity
+	Find(kode string) *RuanganEntity
+	Create(data *RuanganModel) *RuanganEntity
+	Update(kode string, data *RuanganModel) *RuanganEntity
 	Delete(kode string) bool
 }

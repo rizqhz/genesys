@@ -2,7 +2,7 @@ package handler
 
 import "github.com/labstack/echo/v4"
 
-type MatkumHandler interface {
+type PraktikumHandler interface {
 	Index() echo.HandlerFunc
 	Observe() echo.HandlerFunc
 	Store() echo.HandlerFunc

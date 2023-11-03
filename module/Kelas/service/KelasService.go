@@ -1,15 +1,14 @@
 package service
 
 import (
-	"net/url"
-
+	"github.com/labstack/echo/v4"
 	"github.com/rizghz/genesys/module/Kelas/transfer"
 )
 
 type KelasService interface {
-	GetSemuaKelas(query url.Values) []transfer.Response
-	GetKelasSpesifik(kode string) *transfer.Response
-	TambahKelas(data transfer.RequestBody) *transfer.Response
-	EditKelas(kode string, data transfer.RequestBody) *transfer.Response
-	HapusKelas(kode string) bool
+	GetSemuaKelas(ctx echo.Context) []transfer.Response
+	GetKelasSpesifik(ctx echo.Context, kode string) *transfer.Response
+	TambahKelas(ctx echo.Context, request *transfer.RequestBody) *transfer.Response
+	EditKelas(ctx echo.Context, kode string, request *transfer.RequestBody) *transfer.Response
+	HapusKelas(ctx echo.Context, kode string) bool
 }

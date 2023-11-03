@@ -5,27 +5,27 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/rizghz/genesys/internal/helpers"
-	"github.com/rizghz/genesys/module/Ruangan/service"
-	"github.com/rizghz/genesys/module/Ruangan/transfer"
+	"github.com/rizghz/genesys/module/Praktikum/service"
+	"github.com/rizghz/genesys/module/Praktikum/transfer"
 )
 
-type RuanganHttpHandler struct {
-	srv service.RuanganService
+type PraktikumHttpHandler struct {
+	srv service.PraktikumService
 }
 
-func NewRuanganHttpHandler(srv service.RuanganService) RuanganHandler {
-	return &RuanganHttpHandler{
+func NewPraktikumHttpHandler(srv service.PraktikumService) PraktikumHandler {
+	return &PraktikumHttpHandler{
 		srv: srv,
 	}
 }
 
-func (h *RuanganHttpHandler) Index() echo.HandlerFunc {
+func (h *PraktikumHttpHandler) Index() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		result := h.srv.GetSemuaRuangan(ctx)
+		result := h.srv.GetSemuaPraktikum(ctx)
 		if ctx.Get("authorization.error") != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusUnauthorized,
-				Message: "user bukan admin",
+				Message: "user bukan admin praktikum",
 			}
 			return ctx.JSON(http.StatusUnauthorized, response)
 		}
@@ -41,10 +41,10 @@ func (h *RuanganHttpHandler) Index() echo.HandlerFunc {
 	}
 }
 
-func (h *RuanganHttpHandler) Observe() echo.HandlerFunc {
+func (h *PraktikumHttpHandler) Observe() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		kode := ctx.Param("kode")
-		result := h.srv.GetRuanganSpesifik(ctx, kode)
+		id := ctx.Param("id")
+		result := h.srv.GetPraktikumSpesifik(ctx, id)
 		if ctx.Get("authorization.error") != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusUnauthorized,
@@ -64,17 +64,17 @@ func (h *RuanganHttpHandler) Observe() echo.HandlerFunc {
 	}
 }
 
-func (h *RuanganHttpHandler) Store() echo.HandlerFunc {
+func (h *PraktikumHttpHandler) Store() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		request := &transfer.RequestBody{}
 		if err := ctx.Bind(request); err != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusBadRequest,
-				Message: "invalid ruangan data payload",
+				Message: "invalid praktikum data payload",
 			}
 			return ctx.JSON(http.StatusBadRequest, response)
 		}
-		result := h.srv.TambahRuangan(ctx, request)
+		result := h.srv.TambahPraktikum(ctx, request)
 		if ctx.Get("authorization.error") != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusUnauthorized,
@@ -94,18 +94,18 @@ func (h *RuanganHttpHandler) Store() echo.HandlerFunc {
 	}
 }
 
-func (h *RuanganHttpHandler) Edit() echo.HandlerFunc {
+func (h *PraktikumHttpHandler) Edit() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		kode := ctx.Param("kode")
+		id := ctx.Param("id")
 		request := &transfer.RequestBody{}
 		if err := ctx.Bind(request); err != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusBadRequest,
-				Message: "invalid ruangan data payload",
+				Message: "invalid praktikum data payload",
 			}
 			return ctx.JSON(http.StatusBadRequest, response)
 		}
-		result := h.srv.EditRuangan(ctx, kode, request)
+		result := h.srv.EditPraktikum(ctx, id, request)
 		if ctx.Get("authorization.error") != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusUnauthorized,
@@ -125,10 +125,10 @@ func (h *RuanganHttpHandler) Edit() echo.HandlerFunc {
 	}
 }
 
-func (h *RuanganHttpHandler) Destroy() echo.HandlerFunc {
+func (h *PraktikumHttpHandler) Destroy() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		kode := ctx.Param("kode")
-		if h.srv.HapusRuangan(ctx, kode) {
+		id := ctx.Param("id")
+		if h.srv.HapusPraktikum(ctx, id) {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusNoContent,
 				Message: "success",

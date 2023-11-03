@@ -1,15 +1,14 @@
 package service
 
 import (
-	"net/url"
-
+	"github.com/labstack/echo/v4"
 	"github.com/rizghz/genesys/module/Ruangan/transfer"
 )
 
 type RuanganService interface {
-	GetSemuaRuangan(query url.Values) []transfer.Response
-	GetRuanganSpesifik(kode string) *transfer.Response
-	TambahRuangan(data transfer.RequestBody) *transfer.Response
-	EditRuangan(kode string, data transfer.RequestBody) *transfer.Response
-	HapusRuangan(kode string) bool
+	GetSemuaRuangan(ctx echo.Context) []transfer.Response
+	GetRuanganSpesifik(ctx echo.Context, kode string) *transfer.Response
+	TambahRuangan(ctx echo.Context, request *transfer.RequestBody) *transfer.Response
+	EditRuangan(ctx echo.Context, kode string, request *transfer.RequestBody) *transfer.Response
+	HapusRuangan(ctx echo.Context, kode string) bool
 }

@@ -6,13 +6,13 @@ import (
 	mahasiswa "github.com/rizghz/genesys/module/Mahasiswa"
 )
 
-type Entity mahasiswa.MahasiswaEntity
-type Model mahasiswa.MahasiswaModel
+type MahasiswaEntity mahasiswa.MahasiswaEntity
+type MahasiswaModel mahasiswa.MahasiswaModel
 
 type MahasiswaRepository interface {
-	Get(query url.Values) []Entity
-	Find(npm string) *Entity
-	Create(data *Model) *Entity
-	Update(npm string, data *Model) *Entity
+	Get(query url.Values) []MahasiswaEntity
+	Find(npm string) *MahasiswaEntity
+	Create(data *MahasiswaModel) *MahasiswaEntity
+	Update(npm string, data *MahasiswaModel) *MahasiswaEntity
 	Delete(npm string) bool
 }

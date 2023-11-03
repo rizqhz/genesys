@@ -21,8 +21,14 @@ func NewMahasiswaHttpHandler(srv service.MahasiswaService) MahasiswaHandler {
 
 func (h *MahasiswaHttpHandler) Index() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		query := ctx.QueryParams()
-		result := h.srv.GetSemuaMahasiswa(query)
+		result := h.srv.GetSemuaMahasiswa(ctx)
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
+		}
 		if len(result) != 0 {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusOK,
@@ -38,7 +44,14 @@ func (h *MahasiswaHttpHandler) Index() echo.HandlerFunc {
 func (h *MahasiswaHttpHandler) Observe() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		npm := ctx.Param("npm")
-		result := h.srv.GetMahasiswaSpesifik(npm)
+		result := h.srv.GetMahasiswaSpesifik(ctx, npm)
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
+		}
 		if result != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusOK,
@@ -53,15 +66,22 @@ func (h *MahasiswaHttpHandler) Observe() echo.HandlerFunc {
 
 func (h *MahasiswaHttpHandler) Store() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		request := transfer.RequestBody{}
-		if err := ctx.Bind(&request); err != nil {
+		request := &transfer.RequestBody{}
+		if err := ctx.Bind(request); err != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusBadRequest,
 				Message: "invalid mahasiswa data payload",
 			}
 			return ctx.JSON(http.StatusBadRequest, response)
 		}
-		result := h.srv.TambahMahasiswa(request)
+		result := h.srv.TambahMahasiswa(ctx, request)
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
+		}
 		if result != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusCreated,
@@ -77,15 +97,22 @@ func (h *MahasiswaHttpHandler) Store() echo.HandlerFunc {
 func (h *MahasiswaHttpHandler) Edit() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		npm := ctx.Param("npm")
-		request := transfer.RequestBody{}
-		if err := ctx.Bind(&request); err != nil {
+		request := &transfer.RequestBody{}
+		if err := ctx.Bind(request); err != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusBadRequest,
 				Message: "invalid mahasiswa data payload",
 			}
 			return ctx.JSON(http.StatusBadRequest, response)
 		}
-		result := h.srv.EditMahasiswa(npm, request)
+		result := h.srv.EditMahasiswa(ctx, npm, request)
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
+		}
 		if result != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusOK,
@@ -101,12 +128,19 @@ func (h *MahasiswaHttpHandler) Edit() echo.HandlerFunc {
 func (h *MahasiswaHttpHandler) Destroy() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		npm := ctx.Param("npm")
-		if h.srv.HapusMahasiswa(npm) {
+		if h.srv.HapusMahasiswa(ctx, npm) {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusNoContent,
 				Message: "success",
 			}
 			return ctx.JSON(http.StatusNoContent, response)
+		}
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
 		}
 		return ctx.JSON(http.StatusInternalServerError, nil)
 	}

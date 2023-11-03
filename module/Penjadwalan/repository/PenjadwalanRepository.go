@@ -6,13 +6,13 @@ import (
 	penjadwalan "github.com/rizghz/genesys/module/Penjadwalan"
 )
 
-type Entity penjadwalan.PenjadwalanEntity
-type Model penjadwalan.PenjadwalanModel
+type JadwalEntity penjadwalan.PenjadwalanEntity
+type JadwalModel penjadwalan.PenjadwalanModel
 
 type PenjadwalanRepository interface {
-	Get(query url.Values) []Entity
-	Find(id int) *Entity
-	Create(data *Model) *Entity
-	Update(data *Model) *Entity
+	Get(query url.Values) []JadwalEntity
+	Find(id int) *JadwalEntity
+	Create(data *JadwalModel) *JadwalEntity
+	Update(data *JadwalModel) *JadwalEntity
 	Delete(id int) bool
 }

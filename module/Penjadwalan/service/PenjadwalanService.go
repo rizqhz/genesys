@@ -7,8 +7,8 @@ import (
 
 type PenjadwalanService interface {
 	GetSemuaJadwal(ctx echo.Context) []transfer.Response
-	GetJadwalSpesifik(id int) *transfer.Response
-	TambahJadwal(request *transfer.RequestBody) *transfer.Response
-	EditJadwal(id int, request *transfer.RequestBody) *transfer.Response
-	HapusJadwal(id int) bool
+	GetJadwalSpesifik(ctx echo.Context, id int) *transfer.Response
+	TambahJadwal(ctx echo.Context, request *transfer.RequestBody) *transfer.Response
+	EditJadwal(ctx echo.Context, id int, request *transfer.RequestBody) *transfer.Response
+	HapusJadwal(ctx echo.Context, id int) bool
 }

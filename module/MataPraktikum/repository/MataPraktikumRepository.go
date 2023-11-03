@@ -6,15 +6,13 @@ import (
 	matkum "github.com/rizghz/genesys/module/MataPraktikum"
 )
 
-type (
-	Entity matkum.MataPraktikum
-	Model  matkum.MataPraktikumModel
-)
+type MatkumEntity matkum.MataPraktikum
+type MatkumModel matkum.MataPraktikumModel
 
-type MataPraktikumRepository interface {
-	Get(query url.Values) []Entity
-	Find(kode string) *Entity
-	Create(data *Model) *Entity
-	Update(kode string, data *Model) *Entity
+type MatkumRepository interface {
+	Get(query url.Values) []MatkumEntity
+	Find(kode string) *MatkumEntity
+	Create(data *MatkumModel) *MatkumEntity
+	Update(kode string, data *MatkumModel) *MatkumEntity
 	Delete(kode string) bool
 }

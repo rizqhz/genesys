@@ -24,6 +24,13 @@ func NewUserHttpHandler(srv service.UserService) UserHandler {
 func (h *UserHttpHandler) Index() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		result := h.srv.GetSemuaUser(ctx)
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
+		}
 		if len(result) != 0 {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusOK,
@@ -46,7 +53,14 @@ func (h *UserHttpHandler) Observe() echo.HandlerFunc {
 			}
 			return ctx.JSON(http.StatusBadRequest, response)
 		}
-		result := h.srv.GetUserSpesifik(id)
+		result := h.srv.GetUserSpesifik(ctx, id)
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
+		}
 		if result != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusOK,
@@ -78,7 +92,14 @@ func (h *UserHttpHandler) Store() echo.HandlerFunc {
 				request.Foto = *url
 			}
 		}
-		result := h.srv.TambahUser(request)
+		result := h.srv.TambahUser(ctx, request)
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
+		}
 		if result != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusCreated,
@@ -113,12 +134,19 @@ func (h *UserHttpHandler) Edit() echo.HandlerFunc {
 		if err != nil {
 			logrus.Error(err.Error())
 		} else {
-			url := h.srv.UploadFoto(file)
+			url := h.srv.GantiFoto(id, file)
 			if url != nil {
 				request.Foto = *url
 			}
 		}
-		result := h.srv.EditUser(id, request)
+		result := h.srv.EditUser(ctx, id, request)
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
+		}
 		if result != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusOK,
@@ -141,12 +169,19 @@ func (h *UserHttpHandler) Destroy() echo.HandlerFunc {
 			}
 			return ctx.JSON(http.StatusBadRequest, response)
 		}
-		if h.srv.HapusUser(id) {
+		if h.srv.HapusUser(ctx, id) {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusNoContent,
 				Message: "success",
 			}
 			return ctx.JSON(http.StatusNoContent, response)
+		}
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
 		}
 		return ctx.JSON(http.StatusInternalServerError, nil)
 	}

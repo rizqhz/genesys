@@ -6,13 +6,13 @@ import (
 	asisten "github.com/rizghz/genesys/module/Asisten"
 )
 
-type Entity asisten.AsistenEntity
-type Model asisten.AsistenModel
+type AsistenEntity asisten.AsistenEntity
+type AsistenModel asisten.AsistenModel
 
 type AsistenRepository interface {
-	Get(query url.Values) []Entity
-	Find(kode string) *Entity
-	Create(data *Model) *Entity
-	Update(kode string, data *Model) *Entity
+	Get(query url.Values) []AsistenEntity
+	Find(kode string) *AsistenEntity
+	Create(data *AsistenModel) *AsistenEntity
+	Update(kode string, data *AsistenModel) *AsistenEntity
 	Delete(kode string) bool
 }

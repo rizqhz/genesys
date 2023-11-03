@@ -21,8 +21,14 @@ func NewAsistenHttpHandler(srv service.AsistenService) AsistenHandler {
 
 func (h *AsistenHttpHandler) Index() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		query := ctx.QueryParams()
-		result := h.srv.GetSemuaAsisten(query)
+		result := h.srv.GetSemuaAsisten(ctx)
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
+		}
 		if len(result) != 0 {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusOK,
@@ -37,8 +43,15 @@ func (h *AsistenHttpHandler) Index() echo.HandlerFunc {
 
 func (h *AsistenHttpHandler) Observe() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		kode := ctx.Param("kode")
-		result := h.srv.GetAsistenSpesifik(kode)
+		nias := ctx.Param("nias")
+		result := h.srv.GetAsistenSpesifik(ctx, nias)
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
+		}
 		if result != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusOK,
@@ -53,15 +66,22 @@ func (h *AsistenHttpHandler) Observe() echo.HandlerFunc {
 
 func (h *AsistenHttpHandler) Store() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		request := transfer.RequestBody{}
-		if err := ctx.Bind(&request); err != nil {
+		request := &transfer.RequestBody{}
+		if err := ctx.Bind(request); err != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusBadRequest,
 				Message: "invalid asisten data payload",
 			}
 			return ctx.JSON(http.StatusBadRequest, response)
 		}
-		result := h.srv.TambahAsisten(request)
+		result := h.srv.TambahAsisten(ctx, request)
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
+		}
 		if result != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusCreated,
@@ -76,16 +96,23 @@ func (h *AsistenHttpHandler) Store() echo.HandlerFunc {
 
 func (h *AsistenHttpHandler) Edit() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		kode := ctx.Param("kode")
-		request := transfer.RequestBody{}
-		if err := ctx.Bind(&request); err != nil {
+		nias := ctx.Param("nias")
+		request := &transfer.RequestBody{}
+		if err := ctx.Bind(request); err != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusBadRequest,
 				Message: "invalid asisten data payload",
 			}
 			return ctx.JSON(http.StatusBadRequest, response)
 		}
-		result := h.srv.EditAsisten(kode, request)
+		result := h.srv.EditAsisten(ctx, nias, request)
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
+		}
 		if result != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusOK,
@@ -100,13 +127,20 @@ func (h *AsistenHttpHandler) Edit() echo.HandlerFunc {
 
 func (h *AsistenHttpHandler) Destroy() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		kode := ctx.Param("kode")
-		if h.srv.HapusAsisten(kode) {
+		nias := ctx.Param("nias")
+		if h.srv.HapusAsisten(ctx, nias) {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusNoContent,
 				Message: "success",
 			}
 			return ctx.JSON(http.StatusNoContent, response)
+		}
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
 		}
 		return ctx.JSON(http.StatusInternalServerError, nil)
 	}

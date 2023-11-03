@@ -3,7 +3,6 @@ package helpers
 import (
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -34,17 +33,20 @@ func JwtDecode[T any](str *string) (structure *T) {
 	return structure
 }
 
-func JwtValidate(token, key string) (bool, error) {
-	res, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
+func JwtValidate(token []string, key string) bool {
+	buffer := strings.Join(token, ".")
+	res, err := jwt.Parse(buffer, func(t *jwt.Token) (interface{}, error) {
 		return []byte(key), nil
 	})
 	if err != nil {
-		return false, err
+		log.Error("jwt.validate: ", err.Error())
+		return false
 	}
 	if !res.Valid {
-		return false, errors.New("token invalid")
+		log.Error("jwt.validate: token invalid")
+		return false
 	}
-	return true, nil
+	return true
 }
 
 func GetJwtToken(ctx echo.Context) []string {

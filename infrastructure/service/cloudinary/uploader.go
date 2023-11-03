@@ -3,6 +3,7 @@ package cloudinary
 import (
 	"context"
 	"mime/multipart"
+	"strings"
 
 	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/cloudinary/cloudinary-go/v2/api/admin"
@@ -12,6 +13,8 @@ import (
 
 type Uploader interface {
 	Upload(file multipart.File, name string) string
+	GetImageId(url string) string
+	Delete(url string) bool
 }
 
 type ImageUploader struct {
@@ -41,16 +44,28 @@ func (u *ImageUploader) Upload(file multipart.File, name string) string {
 		PublicID: name,
 	})
 	if err != nil {
-		logrus.Error("[upload]: ", err.Error())
+		logrus.Error("[upload.image]: ", err.Error())
 	}
 	return res.SecureURL
 }
 
-func (u *ImageUploader) Delete() bool {
+func (u *ImageUploader) GetImageId(url string) string {
+	var buffer []string
+	buffer = strings.Split(url, "/")
+	buffer = strings.Split(buffer[len(buffer)-1], ".")
+	return buffer[0]
+}
+
+func (u *ImageUploader) Delete(url string) bool {
 	api := u.serv.Admin
 	ctx := context.Background()
-	api.DeleteAssets(ctx, admin.DeleteAssetsParams{
-		PublicIDs: []string{},
+	id := u.GetImageId(url)
+	_, err := api.DeleteAssets(ctx, admin.DeleteAssetsParams{
+		PublicIDs: []string{id},
 	})
-	return false
+	if err != nil {
+		logrus.Error("[delete.image]: ", err.Error())
+		return false
+	}
+	return true
 }

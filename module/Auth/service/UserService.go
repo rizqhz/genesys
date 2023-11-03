@@ -9,9 +9,10 @@ import (
 
 type UserService interface {
 	GetSemuaUser(ctx echo.Context) []transfer.UserResponse
-	GetUserSpesifik(id int) *transfer.UserResponse
-	TambahUser(request *transfer.UserRequestBody) *transfer.UserResponse
-	EditUser(id int, request *transfer.UserRequestBody) *transfer.UserResponse
-	HapusUser(id int) bool
+	GetUserSpesifik(ctx echo.Context, id int) *transfer.UserResponse
+	TambahUser(ctx echo.Context, request *transfer.UserRequestBody) *transfer.UserResponse
+	EditUser(ctx echo.Context, id int, request *transfer.UserRequestBody) *transfer.UserResponse
+	HapusUser(ctx echo.Context, id int) bool
 	UploadFoto(file *multipart.FileHeader) *string
+	GantiFoto(id int, file *multipart.FileHeader) *string
 }

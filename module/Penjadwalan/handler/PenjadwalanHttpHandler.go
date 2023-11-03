@@ -23,6 +23,13 @@ func NewPenjadwalanHttpHandler(srv service.PenjadwalanService) PenjadwalanHandle
 func (h *PenjadwalanHttpHandler) Index() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		result := h.srv.GetSemuaJadwal(ctx)
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin jadwal",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
+		}
 		if len(result) != 0 {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusOK,
@@ -45,7 +52,14 @@ func (h *PenjadwalanHttpHandler) Observe() echo.HandlerFunc {
 			}
 			return ctx.JSON(http.StatusBadRequest, response)
 		}
-		result := h.srv.GetJadwalSpesifik(id)
+		result := h.srv.GetJadwalSpesifik(ctx, id)
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
+		}
 		if result != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusOK,
@@ -68,7 +82,14 @@ func (h *PenjadwalanHttpHandler) Store() echo.HandlerFunc {
 			}
 			return ctx.JSON(http.StatusBadRequest, response)
 		}
-		result := h.srv.TambahJadwal(request)
+		result := h.srv.TambahJadwal(ctx, request)
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
+		}
 		if result != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusCreated,
@@ -87,7 +108,7 @@ func (h *PenjadwalanHttpHandler) Edit() echo.HandlerFunc {
 		if err != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusBadRequest,
-				Message: "invalid Penjadwalan id",
+				Message: "invalid jadwal id",
 			}
 			return ctx.JSON(http.StatusBadRequest, response)
 		}
@@ -99,7 +120,14 @@ func (h *PenjadwalanHttpHandler) Edit() echo.HandlerFunc {
 			}
 			return ctx.JSON(http.StatusBadRequest, response)
 		}
-		result := h.srv.EditJadwal(id, request)
+		result := h.srv.EditJadwal(ctx, id, request)
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
+		}
 		if result != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusOK,
@@ -122,12 +150,19 @@ func (h *PenjadwalanHttpHandler) Destroy() echo.HandlerFunc {
 			}
 			return ctx.JSON(http.StatusBadRequest, response)
 		}
-		if h.srv.HapusJadwal(id) {
+		if h.srv.HapusJadwal(ctx, id) {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusNoContent,
 				Message: "success",
 			}
 			return ctx.JSON(http.StatusNoContent, response)
+		}
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
 		}
 		return ctx.JSON(http.StatusInternalServerError, nil)
 	}

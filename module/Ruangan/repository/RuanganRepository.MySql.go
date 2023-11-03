@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/fatih/structs"
 	mysql "github.com/rizghz/genesys/infrastructure/database/MySql"
 	"github.com/rizghz/genesys/internal/helpers"
-	log "github.com/sirupsen/logrus"
-	"gorm.io/gorm"
+	"github.com/sirupsen/logrus"
 )
 
 type RuanganMySqlRepository struct {
@@ -20,83 +20,81 @@ func NewRuanganMySqlRepository(driver *mysql.MySqlDriver) RuanganRepository {
 	}
 }
 
-func (repo *RuanganMySqlRepository) Get(query url.Values) []Entity {
+func (repo *RuanganMySqlRepository) Get(query url.Values) []RuanganEntity {
 	db := repo.driver.DB.Table("ruangan")
 	db = helpers.QuerySorting(db, query)
 	db = helpers.QueryPagination(db, query)
 	db = helpers.QueryFiltering(db, query)
-	data := make([]Entity, 0)
-	if err := db.Find(&data).Error; err != nil {
-		log.Error("[ruangan.repository]: ", err.Error())
+	data := make([]RuanganEntity, 0)
+	if err := db.Where("deleted_at IS NULL").Find(&data).Error; err != nil {
+		logrus.Error("[ruangan.repository]: ", err.Error())
 		return nil
 	}
 	return data
 }
 
-func (repo *RuanganMySqlRepository) Find(kode string) *Entity {
+func (repo *RuanganMySqlRepository) Find(kode string) *RuanganEntity {
 	db := repo.driver.DB.Table("ruangan")
-	data := Entity{}
-	condition := fmt.Sprintf("kode = '%s'", kode)
-	if err := db.First(&data, condition).Error; err != nil {
-		log.Error("[ruangan.repository]: ", err.Error())
+	data := &RuanganEntity{Kode: kode}
+	cond := fmt.Sprintf("kode = '%s'", kode)
+	if err := db.Where("deleted_at IS NULL").First(&data, cond).Error; err != nil {
+		logrus.Error("[ruangan.repository]: ", err.Error())
 		return nil
 	}
-	return &data
+	return data
 }
 
-func (repo *RuanganMySqlRepository) Create(data *Model) *Entity {
+func (repo *RuanganMySqlRepository) Create(data *RuanganModel) *RuanganEntity {
 	db := repo.driver.DB.Table("ruangan")
-	err := db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(&data).Error; err != nil {
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		log.Error("[ruangan.repository]: ", err.Error())
+	if err := db.Create(&data).Error; err != nil {
+		logrus.Error("[ruangan.repository]: ", err.Error())
 		return nil
 	}
-	return &Entity{
+	return &RuanganEntity{
 		Kode: data.Kode,
 		Nama: data.Nama,
 	}
 }
 
-func (repo *RuanganMySqlRepository) Update(kode string, data *Model) *Entity {
+func (repo *RuanganMySqlRepository) Update(kode string, data *RuanganModel) *RuanganEntity {
 	db := repo.driver.DB.Table("ruangan")
-	query := fmt.Sprintf("UPDATE ruangan SET %s = '%s', %s = '%s' WHERE %s = '%s'", []any{
-		"kode", data.Kode, "nama", data.Nama,
-		"kode", kode,
-	}...)
-	err := db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Exec(query).Error; err != nil {
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		log.Error("[ruangan.repository]: ", err.Error())
+	search := &RuanganModel{Kode: data.Kode}
+	cond := fmt.Sprintf("kode = '%s'", kode)
+	if err := db.Find(&search, cond).Error; err != nil {
+		logrus.Error("[ruangan.repository]: ", err.Error())
 		return nil
 	}
-	return &Entity{
-		Kode: data.Kode,
-		Nama: data.Nama,
+	model := func(old, new *RuanganModel) *RuanganModel {
+		fields := []string{"Kode", "Nama"}
+		n := structs.Map(new)
+		o := structs.Map(old)
+		result := make(map[string]interface{})
+		for _, field := range fields {
+			if n[field] != "" {
+				result[field] = n[field]
+			} else {
+				result[field] = o[field]
+			}
+		}
+		old.Kode = result["Kode"].(string)
+		old.Nama = result["Nama"].(string)
+		return old
+	}(search, data)
+	if err := db.Where(cond).Save(&model).Error; err != nil {
+		logrus.Error("[ruangan.repository]: ", err.Error())
+		return nil
+	}
+	return &RuanganEntity{
+		Kode: model.Kode,
+		Nama: model.Nama,
 	}
 }
 
 func (repo *RuanganMySqlRepository) Delete(kode string) bool {
 	db := repo.driver.DB.Table("ruangan")
-	query := fmt.Sprintf("DELETE FROM ruangan WHERE %s = '%s'", []any{
-		"kode", kode,
-	}...)
-	err := db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Exec(query).Error; err != nil {
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		log.Error("[ruangan.repository]: ", err.Error())
+	cond := fmt.Sprintf("kode = '%s'", kode)
+	if err := db.Delete(&RuanganModel{}, cond).Error; err != nil {
+		logrus.Error("[ruangan.repository]: ", err.Error())
 		return false
 	}
 	return true

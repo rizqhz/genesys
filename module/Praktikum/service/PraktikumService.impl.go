@@ -4,21 +4,21 @@ import (
 	"github.com/labstack/echo/v4"
 	jwt "github.com/rizghz/genesys/infrastructure/middleware/JWT"
 	"github.com/rizghz/genesys/internal/helpers"
-	"github.com/rizghz/genesys/module/MataPraktikum/repository"
-	"github.com/rizghz/genesys/module/MataPraktikum/transfer"
+	"github.com/rizghz/genesys/module/Praktikum/repository"
+	"github.com/rizghz/genesys/module/Praktikum/transfer"
 )
 
-type MatkumServiceImpl struct {
-	repo repository.MatkumRepository
+type PraktikumServiceImpl struct {
+	repo repository.PraktikumRepository
 }
 
-func NewMatkumServiceImpl(r repository.MatkumRepository) MatkumService {
-	return &MatkumServiceImpl{
+func NewPraktikumServiceImpl(r repository.PraktikumRepository) PraktikumService {
+	return &PraktikumServiceImpl{
 		repo: r,
 	}
 }
 
-func (srv *MatkumServiceImpl) GetSemuaMatkum(ctx echo.Context) []transfer.Response {
+func (srv *PraktikumServiceImpl) GetSemuaPraktikum(ctx echo.Context) []transfer.Response {
 	token := helpers.GetJwtToken(ctx)
 	key := jwt.NewJwtKey()
 	if helpers.JwtValidate(token, key.AccessKey) {
@@ -37,7 +37,7 @@ func (srv *MatkumServiceImpl) GetSemuaMatkum(ctx echo.Context) []transfer.Respon
 	return responses
 }
 
-func (srv *MatkumServiceImpl) GetMatkumSpesifik(ctx echo.Context, kode string) *transfer.Response {
+func (srv *PraktikumServiceImpl) GetPraktikumSpesifik(ctx echo.Context, id string) *transfer.Response {
 	token := helpers.GetJwtToken(ctx)
 	key := jwt.NewJwtKey()
 	if helpers.JwtValidate(token, key.AccessKey) {
@@ -47,7 +47,7 @@ func (srv *MatkumServiceImpl) GetMatkumSpesifik(ctx echo.Context, kode string) *
 			return nil
 		}
 	}
-	result := srv.repo.Find(kode)
+	result := srv.repo.Find(id)
 	if result != nil {
 		response := transfer.Response(*result)
 		return &response
@@ -55,7 +55,7 @@ func (srv *MatkumServiceImpl) GetMatkumSpesifik(ctx echo.Context, kode string) *
 	return nil
 }
 
-func (srv *MatkumServiceImpl) TambahMatkum(ctx echo.Context, request *transfer.RequestBody) *transfer.Response {
+func (srv *PraktikumServiceImpl) TambahPraktikum(ctx echo.Context, request *transfer.RequestBody) *transfer.Response {
 	token := helpers.GetJwtToken(ctx)
 	key := jwt.NewJwtKey()
 	if helpers.JwtValidate(token, key.AccessKey) {
@@ -65,21 +65,27 @@ func (srv *MatkumServiceImpl) TambahMatkum(ctx echo.Context, request *transfer.R
 			return nil
 		}
 	}
-	data := &repository.MatkumModel{
-		Kode: request.Kode,
-		Nama: request.Nama,
+	data := &repository.PraktikumModel{
+		ID:                request.ID,
+		KodeMataPraktikum: request.MataPraktikum,
+		KodeRuangan:       request.Ruangan,
+		KodeKelas:         request.Kelas,
+		JadwalID:          request.Jadwal,
 	}
 	result := srv.repo.Create(data)
 	if result != nil {
 		return &transfer.Response{
-			Kode: result.Kode,
-			Nama: result.Nama,
+			ID:                result.ID,
+			KodeMataPraktikum: result.KodeMataPraktikum,
+			KodeRuangan:       result.KodeRuangan,
+			KodeKelas:         result.KodeKelas,
+			JadwalID:          result.JadwalID,
 		}
 	}
 	return nil
 }
 
-func (srv *MatkumServiceImpl) EditMatkum(ctx echo.Context, kode string, request *transfer.RequestBody) *transfer.Response {
+func (srv *PraktikumServiceImpl) EditPraktikum(ctx echo.Context, id string, request *transfer.RequestBody) *transfer.Response {
 	token := helpers.GetJwtToken(ctx)
 	key := jwt.NewJwtKey()
 	if helpers.JwtValidate(token, key.AccessKey) {
@@ -89,21 +95,27 @@ func (srv *MatkumServiceImpl) EditMatkum(ctx echo.Context, kode string, request 
 			return nil
 		}
 	}
-	data := &repository.MatkumModel{
-		Kode: request.Kode,
-		Nama: request.Nama,
+	data := &repository.PraktikumModel{
+		ID:                request.ID,
+		KodeMataPraktikum: request.MataPraktikum,
+		KodeRuangan:       request.Ruangan,
+		KodeKelas:         request.Kelas,
+		JadwalID:          request.Jadwal,
 	}
-	result := srv.repo.Update(kode, data)
+	result := srv.repo.Update(id, data)
 	if result != nil {
 		return &transfer.Response{
-			Kode: result.Kode,
-			Nama: result.Nama,
+			ID:                result.ID,
+			KodeMataPraktikum: result.KodeMataPraktikum,
+			KodeRuangan:       result.KodeRuangan,
+			KodeKelas:         result.KodeKelas,
+			JadwalID:          result.JadwalID,
 		}
 	}
 	return nil
 }
 
-func (srv *MatkumServiceImpl) HapusMatkum(ctx echo.Context, kode string) bool {
+func (srv *PraktikumServiceImpl) HapusPraktikum(ctx echo.Context, id string) bool {
 	token := helpers.GetJwtToken(ctx)
 	key := jwt.NewJwtKey()
 	if helpers.JwtValidate(token, key.AccessKey) {
@@ -113,5 +125,5 @@ func (srv *MatkumServiceImpl) HapusMatkum(ctx echo.Context, kode string) bool {
 			return false
 		}
 	}
-	return srv.repo.Delete(kode)
+	return srv.repo.Delete(id)
 }

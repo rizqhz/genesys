@@ -1,15 +1,14 @@
 package service
 
 import (
-	"net/url"
-
+	"github.com/labstack/echo/v4"
 	"github.com/rizghz/genesys/module/Asisten/transfer"
 )
 
 type AsistenService interface {
-	GetSemuaAsisten(query url.Values) []transfer.Response
-	GetAsistenSpesifik(nias string) *transfer.Response
-	TambahAsisten(data transfer.RequestBody) *transfer.Response
-	EditAsisten(nias string, data transfer.RequestBody) *transfer.Response
-	HapusAsisten(nias string) bool
+	GetSemuaAsisten(ctx echo.Context) []transfer.Response
+	GetAsistenSpesifik(ctx echo.Context, nias string) *transfer.Response
+	TambahAsisten(ctx echo.Context, request *transfer.RequestBody) *transfer.Response
+	EditAsisten(ctx echo.Context, nias string, request *transfer.RequestBody) *transfer.Response
+	HapusAsisten(ctx echo.Context, nias string) bool
 }

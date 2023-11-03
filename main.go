@@ -3,35 +3,17 @@ package main
 import (
 	"github.com/labstack/echo/v4"
 	mysql "github.com/rizghz/genesys/infrastructure/database/MySql"
-	"github.com/rizghz/genesys/infrastructure/service/cloudinary"
 	"github.com/rizghz/genesys/internal/database/migration"
+	"github.com/rizghz/genesys/internal/injector"
 	"github.com/rizghz/genesys/internal/route"
-	. "github.com/rizghz/genesys/module/Asisten"
-	. "github.com/rizghz/genesys/module/Asisten/handler"
-	. "github.com/rizghz/genesys/module/Asisten/repository"
-	. "github.com/rizghz/genesys/module/Asisten/service"
-	. "github.com/rizghz/genesys/module/Auth"
-	. "github.com/rizghz/genesys/module/Auth/handler"
-	auth_r "github.com/rizghz/genesys/module/Auth/repository"
-	. "github.com/rizghz/genesys/module/Auth/service"
-	. "github.com/rizghz/genesys/module/Kelas"
-	. "github.com/rizghz/genesys/module/Kelas/handler"
-	kelas_r "github.com/rizghz/genesys/module/Kelas/repository"
-	. "github.com/rizghz/genesys/module/Kelas/service"
-	. "github.com/rizghz/genesys/module/Mahasiswa"
-	. "github.com/rizghz/genesys/module/Mahasiswa/handler"
-	mahasiswa_r "github.com/rizghz/genesys/module/Mahasiswa/repository"
-	. "github.com/rizghz/genesys/module/Mahasiswa/service"
-	. "github.com/rizghz/genesys/module/MataPraktikum"
-	. "github.com/rizghz/genesys/module/MataPraktikum/handler"
-	mata_r "github.com/rizghz/genesys/module/MataPraktikum/repository"
-	. "github.com/rizghz/genesys/module/MataPraktikum/service"
-	. "github.com/rizghz/genesys/module/Penjadwalan"
-	. "github.com/rizghz/genesys/module/Praktikum"
-	. "github.com/rizghz/genesys/module/Ruangan"
-	. "github.com/rizghz/genesys/module/Ruangan/handler"
-	ruang_r "github.com/rizghz/genesys/module/Ruangan/repository"
-	. "github.com/rizghz/genesys/module/Ruangan/service"
+	asisten "github.com/rizghz/genesys/module/Asisten"
+	auth "github.com/rizghz/genesys/module/Auth"
+	kelas "github.com/rizghz/genesys/module/Kelas"
+	mahasiswa "github.com/rizghz/genesys/module/Mahasiswa"
+	mata_praktikum "github.com/rizghz/genesys/module/MataPraktikum"
+	penjadwalan "github.com/rizghz/genesys/module/Penjadwalan"
+	praktikum "github.com/rizghz/genesys/module/Praktikum"
+	ruangan "github.com/rizghz/genesys/module/Ruangan"
 )
 
 func main() {
@@ -41,13 +23,15 @@ func main() {
 	e := echo.New()
 	route.Middleware(e)
 
-	UserModule(e, driver)
 	AuthModule(e, driver)
-	KelasModule(e, driver)
-	RuanganModule(e, driver)
+	UserModule(e, driver)
 	MataPraktikumModule(e, driver)
-	MahasiswaModule(e, driver)
+	RuanganModule(e, driver)
+	KelasModule(e, driver)
 	AsistenModule(e, driver)
+	MahasiswaModule(e, driver)
+	JadwalModule(e, driver)
+	PraktikumModule(e, driver)
 
 	e.Logger.Fatal(e.Start(":8008"))
 }
@@ -55,74 +39,70 @@ func main() {
 func migrate(driver *mysql.MySqlDriver) {
 	migrator := migration.NewMySqlMigrator(driver)
 	migrator.DropTable([]migration.Table{
-		UserModel{},
-		CredentialModel{},
-		KelasModel{},
-		MahasiswaModel{},
-		RuanganModel{},
-		AsistenModel{},
-		MataPraktikumModel{},
-		PenjadwalanModel{},
-		PraktikumModel{},
+		auth.UserModel{},
+		auth.CredentialModel{},
+		kelas.KelasModel{},
+		mahasiswa.MahasiswaModel{},
+		ruangan.RuanganModel{},
+		asisten.AsistenModel{},
+		mata_praktikum.MataPraktikumModel{},
+		penjadwalan.PenjadwalanModel{},
+		praktikum.PraktikumModel{},
 	}...)
 	migrator.CreateTable([]migration.Table{
-		UserModel{},
-		CredentialModel{},
-		KelasModel{},
-		MahasiswaModel{},
-		RuanganModel{},
-		AsistenModel{},
-		MataPraktikumModel{},
-		PenjadwalanModel{},
-		PraktikumModel{},
+		auth.UserModel{},
+		auth.CredentialModel{},
+		kelas.KelasModel{},
+		mahasiswa.MahasiswaModel{},
+		ruangan.RuanganModel{},
+		asisten.AsistenModel{},
+		mata_praktikum.MataPraktikumModel{},
+		penjadwalan.PenjadwalanModel{},
+		praktikum.PraktikumModel{},
 	}...)
-}
-
-func UserModule(e *echo.Echo, driver *mysql.MySqlDriver) {
-	repository := auth_r.NewUserMySqlRepository(driver)
-	service := NewUserServiceImpl(repository, cloudinary.NewImageUploader())
-	handler := NewUserHttpHandler(service)
-	route.User(e, handler)
 }
 
 func AuthModule(e *echo.Echo, driver *mysql.MySqlDriver) {
-	repository := auth_r.NewCredentialMySqlRepository(driver)
-	service := NewAuthServiceImpl(repository)
-	handler := NewAuthHttpHandler(service)
+	handler := injector.AuthInject(e, driver)
 	route.Auth(e, handler)
 }
 
-func KelasModule(e *echo.Echo, driver *mysql.MySqlDriver) {
-	repository := kelas_r.NewKelasMySqlRepository(driver)
-	service := NewKelasServiceImpl(repository)
-	handler := NewKelasHttpHandler(service)
-	route.Kelas(e, handler)
-}
-
-func RuanganModule(e *echo.Echo, driver *mysql.MySqlDriver) {
-	repository := ruang_r.NewRuanganMySqlRepository(driver)
-	service := NewRuanganServiceImpl(repository)
-	handler := NewRuanganHttpHandler(service)
-	route.Ruangan(e, handler)
+func UserModule(e *echo.Echo, driver *mysql.MySqlDriver) {
+	handler := injector.UserInject(e, driver)
+	route.User(e, handler)
 }
 
 func MataPraktikumModule(e *echo.Echo, driver *mysql.MySqlDriver) {
-	repository := mata_r.NewMataPraktikumMySqlRepository(driver)
-	service := NewMataPraktikumServiceImpl(repository)
-	handler := NewMataPraktikumHttpHandler(service)
+	handler := injector.MatkumInject(e, driver)
 	route.MataPraktikum(e, handler)
 }
 
-func MahasiswaModule(e *echo.Echo, driver *mysql.MySqlDriver) {
-	repository := mahasiswa_r.NewMahasiswaMySqlRepository(driver)
-	service := NewMahasiswaServiceImpl(repository)
-	handler := NewMahasiswaHttpHandler(service)
-	route.Mahasiswa(e, handler)
+func RuanganModule(e *echo.Echo, driver *mysql.MySqlDriver) {
+	handler := injector.RuanganInject(e, driver)
+	route.Ruangan(e, handler)
+}
+
+func KelasModule(e *echo.Echo, driver *mysql.MySqlDriver) {
+	handler := injector.KelasInject(e, driver)
+	route.Kelas(e, handler)
 }
 
 func AsistenModule(e *echo.Echo, driver *mysql.MySqlDriver) {
-	repository := NewAsistenMySqlRepository(driver)
-	service := NewAsistenServiceImpl(repository)
-	handler := NewAsistenHttpHandler(service)
+	handler := injector.AsistenInject(e, driver)
 	route.Asisten(e, handler)
+}
+
+func MahasiswaModule(e *echo.Echo, driver *mysql.MySqlDriver) {
+	handler := injector.MahasiswaInject(e, driver)
+	route.Mahasiswa(e, handler)
+}
+
+func JadwalModule(e *echo.Echo, driver *mysql.MySqlDriver) {
+	handler := injector.PenjadwalanInject(e, driver)
+	route.Jadwal(e, handler)
+}
+
+func PraktikumModule(e *echo.Echo, driver *mysql.MySqlDriver) {
+	handler := injector.PraktikumInject(e, driver)
+	route.Praktikum(e, handler)
 }

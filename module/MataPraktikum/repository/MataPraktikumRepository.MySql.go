@@ -4,99 +4,97 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/fatih/structs"
 	mysql "github.com/rizghz/genesys/infrastructure/database/MySql"
 	"github.com/rizghz/genesys/internal/helpers"
-	log "github.com/sirupsen/logrus"
-	"gorm.io/gorm"
+	"github.com/sirupsen/logrus"
 )
 
-type MataPraktikumMySqlRepository struct {
+type MatkumMySqlRepository struct {
 	driver *mysql.MySqlDriver
 }
 
-func NewMataPraktikumMySqlRepository(driver *mysql.MySqlDriver) MataPraktikumRepository {
-	return &MataPraktikumMySqlRepository{
+func NewMatkumMySqlRepository(driver *mysql.MySqlDriver) MatkumRepository {
+	return &MatkumMySqlRepository{
 		driver: driver,
 	}
 }
 
-func (repo *MataPraktikumMySqlRepository) Get(query url.Values) []Entity {
+func (repo *MatkumMySqlRepository) Get(query url.Values) []MatkumEntity {
 	db := repo.driver.DB.Table("mata_praktikum")
 	db = helpers.QuerySorting(db, query)
 	db = helpers.QueryPagination(db, query)
 	db = helpers.QueryFiltering(db, query)
-	data := make([]Entity, 0)
-	if err := db.Find(&data).Error; err != nil {
-		log.Error("[mata_praktikum.repository]: ", err.Error())
+	data := make([]MatkumEntity, 0)
+	if err := db.Where("deleted_at IS NULL").Find(&data).Error; err != nil {
+		logrus.Error("[matkum.repository]: ", err.Error())
 		return nil
 	}
 	return data
 }
 
-func (repo *MataPraktikumMySqlRepository) Find(kode string) *Entity {
+func (repo *MatkumMySqlRepository) Find(kode string) *MatkumEntity {
 	db := repo.driver.DB.Table("mata_praktikum")
-	data := Entity{}
-	condition := fmt.Sprintf("kode = '%s'", kode)
-	if err := db.First(&data, condition).Error; err != nil {
-		log.Error("[mata_praktikum.repository]: ", err.Error())
+	data := &MatkumEntity{Kode: kode}
+	cond := fmt.Sprintf("kode = '%s'", kode)
+	if err := db.Where("deleted_at IS NULL").First(&data, cond).Error; err != nil {
+		logrus.Error("[matkum.repository]: ", err.Error())
 		return nil
 	}
-	return &data
+	return data
 }
 
-func (repo *MataPraktikumMySqlRepository) Create(data *Model) *Entity {
+func (repo *MatkumMySqlRepository) Create(data *MatkumModel) *MatkumEntity {
 	db := repo.driver.DB.Table("mata_praktikum")
-	err := db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(&data).Error; err != nil {
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		log.Error("[mata_praktikum.repository]: ", err.Error())
+	if err := db.Create(&data).Error; err != nil {
+		logrus.Error("[matkum.repository]: ", err.Error())
 		return nil
 	}
-	return &Entity{
+	return &MatkumEntity{
 		Kode: data.Kode,
 		Nama: data.Nama,
 	}
 }
 
-func (repo *MataPraktikumMySqlRepository) Update(kode string, data *Model) *Entity {
+func (repo *MatkumMySqlRepository) Update(kode string, data *MatkumModel) *MatkumEntity {
 	db := repo.driver.DB.Table("mata_praktikum")
-	query := fmt.Sprintf("UPDATE mata_praktikum SET %s = '%s', %s = '%s' WHERE %s = '%s'", []any{
-		"kode", data.Kode, "nama", data.Nama,
-		"kode", kode,
-	}...)
-	err := db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Exec(query).Error; err != nil {
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		log.Error("[mata_praktikum.repository]: ", err.Error())
+	search := &MatkumModel{Kode: data.Kode}
+	cond := fmt.Sprintf("kode = '%s'", kode)
+	if err := db.Find(&search, cond).Error; err != nil {
+		logrus.Error("[matkum.repository]: ", err.Error())
 		return nil
 	}
-	return &Entity{
-		Kode: data.Kode,
-		Nama: data.Nama,
+	model := func(old, new *MatkumModel) *MatkumModel {
+		fields := []string{"Kode", "Nama"}
+		n := structs.Map(new)
+		o := structs.Map(old)
+		result := make(map[string]interface{})
+		for _, field := range fields {
+			if n[field] != "" {
+				result[field] = n[field]
+			} else {
+				result[field] = o[field]
+			}
+		}
+		old.Kode = result["Kode"].(string)
+		old.Nama = result["Nama"].(string)
+		return old
+	}(search, data)
+	if err := db.Where(cond).Save(&model).Error; err != nil {
+		logrus.Error("[matkum.repository]: ", err.Error())
+		return nil
+	}
+	return &MatkumEntity{
+		Kode: model.Kode,
+		Nama: model.Nama,
 	}
 }
 
-func (repo *MataPraktikumMySqlRepository) Delete(kode string) bool {
+func (repo *MatkumMySqlRepository) Delete(kode string) bool {
 	db := repo.driver.DB.Table("mata_praktikum")
-	query := fmt.Sprintf("DELETE FROM mata_praktikum WHERE %s = '%s'", []any{
-		"kode", kode,
-	}...)
-	err := db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Exec(query).Error; err != nil {
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		log.Error("[mata_praktikum.repository]: ", err.Error())
+	cond := fmt.Sprintf("kode = '%s'", kode)
+	if err := db.Delete(&MatkumModel{}, cond).Error; err != nil {
+		logrus.Error("[matkum.repository]: ", err.Error())
 		return false
 	}
 	return true

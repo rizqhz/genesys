@@ -21,8 +21,14 @@ func NewKelasHttpHandler(srv service.KelasService) KelasHandler {
 
 func (h *KelasHttpHandler) Index() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		query := ctx.QueryParams()
-		result := h.srv.GetSemuaKelas(query)
+		result := h.srv.GetSemuaKelas(ctx)
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
+		}
 		if len(result) != 0 {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusOK,
@@ -38,7 +44,14 @@ func (h *KelasHttpHandler) Index() echo.HandlerFunc {
 func (h *KelasHttpHandler) Observe() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		kode := ctx.Param("kode")
-		result := h.srv.GetKelasSpesifik(kode)
+		result := h.srv.GetKelasSpesifik(ctx, kode)
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
+		}
 		if result != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusOK,
@@ -53,15 +66,22 @@ func (h *KelasHttpHandler) Observe() echo.HandlerFunc {
 
 func (h *KelasHttpHandler) Store() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		request := transfer.RequestBody{}
-		if err := ctx.Bind(&request); err != nil {
+		request := &transfer.RequestBody{}
+		if err := ctx.Bind(request); err != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusBadRequest,
 				Message: "invalid kelas data payload",
 			}
 			return ctx.JSON(http.StatusBadRequest, response)
 		}
-		result := h.srv.TambahKelas(request)
+		result := h.srv.TambahKelas(ctx, request)
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
+		}
 		if result != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusCreated,
@@ -77,15 +97,22 @@ func (h *KelasHttpHandler) Store() echo.HandlerFunc {
 func (h *KelasHttpHandler) Edit() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		kode := ctx.Param("kode")
-		request := transfer.RequestBody{}
-		if err := ctx.Bind(&request); err != nil {
+		request := &transfer.RequestBody{}
+		if err := ctx.Bind(request); err != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusBadRequest,
 				Message: "invalid kelas data payload",
 			}
 			return ctx.JSON(http.StatusBadRequest, response)
 		}
-		result := h.srv.EditKelas(kode, request)
+		result := h.srv.EditKelas(ctx, kode, request)
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
+		}
 		if result != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusOK,
@@ -101,12 +128,19 @@ func (h *KelasHttpHandler) Edit() echo.HandlerFunc {
 func (h *KelasHttpHandler) Destroy() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		kode := ctx.Param("kode")
-		if h.srv.HapusKelas(kode) {
+		if h.srv.HapusKelas(ctx, kode) {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusNoContent,
 				Message: "success",
 			}
 			return ctx.JSON(http.StatusNoContent, response)
+		}
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
 		}
 		return ctx.JSON(http.StatusInternalServerError, nil)
 	}

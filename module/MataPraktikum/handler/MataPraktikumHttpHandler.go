@@ -9,20 +9,26 @@ import (
 	"github.com/rizghz/genesys/module/MataPraktikum/transfer"
 )
 
-type MataPraktikumHttpHandler struct {
-	srv service.MataPraktikumService
+type MatkumHttpHandler struct {
+	srv service.MatkumService
 }
 
-func NewMataPraktikumHttpHandler(srv service.MataPraktikumService) MataPraktikumHandler {
-	return &MataPraktikumHttpHandler{
+func NewMatkumHttpHandler(srv service.MatkumService) MatkumHandler {
+	return &MatkumHttpHandler{
 		srv: srv,
 	}
 }
 
-func (h *MataPraktikumHttpHandler) Index() echo.HandlerFunc {
+func (h *MatkumHttpHandler) Index() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		query := ctx.QueryParams()
-		result := h.srv.GetSemuaMataPraktikum(query)
+		result := h.srv.GetSemuaMatkum(ctx)
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
+		}
 		if len(result) != 0 {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusOK,
@@ -35,10 +41,17 @@ func (h *MataPraktikumHttpHandler) Index() echo.HandlerFunc {
 	}
 }
 
-func (h *MataPraktikumHttpHandler) Observe() echo.HandlerFunc {
+func (h *MatkumHttpHandler) Observe() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		kode := ctx.Param("kode")
-		result := h.srv.GetMataPraktikumSpesifik(kode)
+		result := h.srv.GetMatkumSpesifik(ctx, kode)
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
+		}
 		if result != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusOK,
@@ -51,17 +64,24 @@ func (h *MataPraktikumHttpHandler) Observe() echo.HandlerFunc {
 	}
 }
 
-func (h *MataPraktikumHttpHandler) Store() echo.HandlerFunc {
+func (h *MatkumHttpHandler) Store() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		request := transfer.RequestBody{}
-		if err := ctx.Bind(&request); err != nil {
+		request := &transfer.RequestBody{}
+		if err := ctx.Bind(request); err != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusBadRequest,
 				Message: "invalid mata praktikum data payload",
 			}
 			return ctx.JSON(http.StatusBadRequest, response)
 		}
-		result := h.srv.TambahMataPraktikum(request)
+		result := h.srv.TambahMatkum(ctx, request)
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
+		}
 		if result != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusCreated,
@@ -74,18 +94,25 @@ func (h *MataPraktikumHttpHandler) Store() echo.HandlerFunc {
 	}
 }
 
-func (h *MataPraktikumHttpHandler) Edit() echo.HandlerFunc {
+func (h *MatkumHttpHandler) Edit() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		kode := ctx.Param("kode")
-		request := transfer.RequestBody{}
-		if err := ctx.Bind(&request); err != nil {
+		request := &transfer.RequestBody{}
+		if err := ctx.Bind(request); err != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusBadRequest,
 				Message: "invalid mata praktikum data payload",
 			}
 			return ctx.JSON(http.StatusBadRequest, response)
 		}
-		result := h.srv.EditMataPraktikum(kode, request)
+		result := h.srv.EditMatkum(ctx, kode, request)
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
+		}
 		if result != nil {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusOK,
@@ -98,15 +125,22 @@ func (h *MataPraktikumHttpHandler) Edit() echo.HandlerFunc {
 	}
 }
 
-func (h *MataPraktikumHttpHandler) Destroy() echo.HandlerFunc {
+func (h *MatkumHttpHandler) Destroy() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		kode := ctx.Param("kode")
-		if h.srv.HapusMataPraktikum(kode) {
+		if h.srv.HapusMatkum(ctx, kode) {
 			response := helpers.ApiResponse[any]{
 				Status:  http.StatusNoContent,
 				Message: "success",
 			}
 			return ctx.JSON(http.StatusNoContent, response)
+		}
+		if ctx.Get("authorization.error") != nil {
+			response := helpers.ApiResponse[any]{
+				Status:  http.StatusUnauthorized,
+				Message: "user bukan admin",
+			}
+			return ctx.JSON(http.StatusUnauthorized, response)
 		}
 		return ctx.JSON(http.StatusInternalServerError, nil)
 	}

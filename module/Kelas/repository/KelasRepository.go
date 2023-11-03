@@ -6,13 +6,13 @@ import (
 	kelas "github.com/rizghz/genesys/module/Kelas"
 )
 
-type Entity kelas.KelasEntity
-type Model kelas.KelasModel
+type KelasEntity kelas.KelasEntity
+type KelasModel kelas.KelasModel
 
 type KelasRepository interface {
-	Get(query url.Values) []Entity
-	Find(kode string) *Entity
-	Create(data *Model) *Entity
-	Update(kode string, data *Model) *Entity
+	Get(query url.Values) []KelasEntity
+	Find(kode string) *KelasEntity
+	Create(data *KelasModel) *KelasEntity
+	Update(kode string, data *KelasModel) *KelasEntity
 	Delete(kode string) bool
 }
